@@ -5,47 +5,87 @@ This programe make log-file of selecting dialog in Skype
 import sqlite3
 import sys
 import datetime
+import os
 
 ########################################################################################################################################
 
 def main():
     '''Main function '''
-    path = path_to_base_reading('config.py')
+    path = path_to_base_reading (attemt=3)
     print 'Reading config file complit, connecting now to', path
-    try:
-        conn = sqlite3.connect(path)
-        c = conn.cursor()
-        c.execute('select * from Messages')
-        data = c.fetchall()
-        contact = select_contact(data)
-        log_contact = log(data, contact)
-        write_file(log_contact, contact)
+    if path!=None:
+        try:
+            conn = sqlite3.connect(path)
+            c = conn.cursor()
+            c.execute('select * from Messages')
+            data = c.fetchall()
+            contact = select_contact(data)
+            log_contact = log(data, contact)
+            write_file(log_contact, contact)
         
-    except sqlite3.OperationalError:
-        print 'Connecting error'
-    finally:
-        conn.close()
+        except sqlite3.OperationalError:
+            print 'Connecting error, please, input your real nickname in Skype'
+        finally:
+            conn.close()
+    else:
+        return None
 
 ##################################################################################################
 
-def path_to_base_reading(conf_file):
+def path_to_base_reading(attemt):
     '''
-    This function read the path to the Skype database file (main.db) from file config.py.
-    TODO:   1. Make function, wich must build path to database automaticaly
-            2. Do it for all platforms
+    This function create the path to Skype database file (main.db).
+    It's possibol if you OS - Linux, you input existing skype_nickname in Skype and main.db is in standart path in your PC
+    TODO:   1. Make function, wich must build path to database automaticaly to other platforms (Windows, Mac)
+            
     '''
-    try:
-        f = open(conf_file, 'r')
-        path_database = f.read()
-        print 'open.........................'
-    except : #sqlite3.OperationalError:
-        print 'Config file is not found'
+    def path_isdir(your_path):
+        if os.path.isdir(your_path)==True:
+            path_database = your_path + '/main.db'
+            return path_database
+        else:
+            print 'some error in input or/and path'
+            return None
+                
+        # must be input from keyboard
+    def made_path():
+        skype_nickname = raw_input("Input your nickname in Skype for finding database - ")
+        database_dir = '/home/'+os.getlogin() + '/.Skype/'+ skype_nickname
+        path_database = path_isdir(database_dir)
+        return path_database
+
+    if os.uname()[0] =='Linux':
+        #create path to database in Unix OS
+        #skype_nickname = 'harm_vetal'
+        path = None
+        step = 0
+        print os.uname()[0], attemt, path, step
+        
+        while step < attemt:
+            path = made_path()
+            if path != None: break
+            step +=1
+        return path
+    else:
+        print 'your OS not supporting now'
         return None
+
+        
+            
+
+        #find path 
+    #try:
+    #    f = open(conf_file, 'r')
+    #    path_database = f.read()
+    #    print 'open.........................'
+    #except : #sqlite3.OperationalError:
+    #    print 'Config file is not found'
+    #   return None
     
-    finally:
-        f.close()
-        #print path_database
-    return path_database
+    #finally:
+    #    f.close()
+    #    #print path_database
+    #return path_database
 
 ###############################################################################################
 
